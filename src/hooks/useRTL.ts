@@ -3,7 +3,6 @@ import { useSettings } from './useSettings';
 
 export const useRTL = () => {
   const { rtl } = useSettings();
-  console.log('rtl', rtl);
   const isRTL = rtl.isRTL;
 
   return {

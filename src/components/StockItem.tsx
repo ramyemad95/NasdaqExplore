@@ -22,43 +22,34 @@ const StockItem: React.FC<Props> = React.memo(({ ticker, name, stock }) => {
     });
   }, [navigation, stock, ticker, name]);
 
-  // Memoize the title style to prevent recreation
-  const titleStyle = useMemo(
-    () => [
-      styles.title,
-      {
-        color: theme.colors.onSurface,
-        textAlign: textAlign as any,
-      },
+  // Combine all styles into a single memoized object
+  const memoizedStyles = useMemo(
+    () => ({
+      title: [
+        styles.title,
+        { color: theme.colors.onSurface, textAlign: textAlign as any },
+      ],
+      description: [
+        styles.description,
+        { color: theme.colors.onSurfaceVariant, textAlign: textAlign as any },
+      ],
+      container: [styles.container, { backgroundColor: theme.colors.surface }],
+    }),
+    [
+      theme.colors.onSurface,
+      theme.colors.onSurfaceVariant,
+      theme.colors.surface,
+      textAlign,
     ],
-    [theme.colors.onSurface, textAlign],
-  );
-
-  // Memoize the description style to prevent recreation
-  const descriptionStyle = useMemo(
-    () => [
-      styles.description,
-      {
-        color: theme.colors.onSurfaceVariant,
-        textAlign: textAlign as any,
-      },
-    ],
-    [theme.colors.onSurfaceVariant, textAlign],
-  );
-
-  // Memoize the container style to prevent recreation
-  const containerStyle = useMemo(
-    () => [styles.container, { backgroundColor: theme.colors.surface }],
-    [theme.colors.surface],
   );
 
   return (
     <List.Item
       title={ticker}
       description={name}
-      titleStyle={titleStyle}
-      descriptionStyle={descriptionStyle}
-      style={containerStyle}
+      titleStyle={memoizedStyles.title}
+      descriptionStyle={memoizedStyles.description}
+      style={memoizedStyles.container}
       onPress={handlePress}
     />
   );

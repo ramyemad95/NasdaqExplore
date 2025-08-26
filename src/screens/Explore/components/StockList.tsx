@@ -1,9 +1,6 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import { useTheme, Text, Button } from 'react-native-paper';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '../../../store';
-import { fetchStocks } from '../../../store/stocksSlice';
 import StockItem from '../../../components/StockItem';
 import {
   ShimmerList,
@@ -13,14 +10,33 @@ import {
 import { useRTL } from '../../../hooks/useRTL';
 import { useTranslation } from 'react-i18next';
 import { Animated } from 'react-native';
+import { useStocks } from '../../../hooks/useStocks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
+import { StockFilters, BaseComponentProps } from '../../../utils/types';
 
 const StockList: React.FC = React.memo(() => {
   const theme = useTheme();
   const { textAlign } = useRTL();
   const { t } = useTranslation();
-  const dispatch = useDispatch<AppDispatch>();
-  const { list, status, pagination, error, errorDetails, lastRequestedUrl } =
-    useSelector((state: RootState) => state.stocks);
+
+  // Use the new useStocks hook
+  const {
+    stocks,
+    isLoading,
+    hasError,
+    error,
+    errorDetails,
+    hasMoreStocks,
+    paginationUrl,
+    searchStocks,
+    loadMoreStocks,
+    resetStocks,
+  } = useStocks();
+
+  // Performance monitoring
+
+  // Get filters from Redux (keeping this for now since filters aren't in useStocks yet)
   const filters = useSelector((state: RootState) => state.filters);
 
   // Local loading state for retry operations
@@ -28,43 +44,38 @@ const StockList: React.FC = React.memo(() => {
 
   // Reset retry loading state when status changes
   useEffect(() => {
-    if (status === 'loading' || status === 'idle') {
+    if (!isLoading) {
       setIsRetrying(false);
     }
-  }, [status]);
+  }, [isLoading]);
 
   // Memoize filters string to prevent unnecessary API calls
   const filtersString = useMemo(() => JSON.stringify(filters), [filters]);
 
   // Memoize the loadMore function to prevent unnecessary re-renders
   const loadMore = useCallback(() => {
-    if (status === 'loading') {
+    if (isLoading || !hasMoreStocks || !paginationUrl) {
       return;
     }
-
-    if (!pagination.next_url) {
-      return;
-    }
-
-    dispatch(fetchStocks({ filters, next_url: pagination.next_url }));
-  }, [dispatch, filtersString, pagination.next_url, status]);
+    loadMoreStocks(paginationUrl);
+  }, [isLoading, hasMoreStocks, paginationUrl, loadMoreStocks]);
 
   // Memoize the onRefresh function
   const onRefresh = useCallback(() => {
-    dispatch(fetchStocks({ search: '', filters }));
-  }, [dispatch, filtersString]);
+    searchStocks('', filters);
+  }, [searchStocks, filtersString]);
 
   // Memoize the refresh control to prevent recreation
   const refreshControl = useMemo(
     () => (
       <RefreshControl
-        refreshing={status === 'loading' && list.length === 0}
+        refreshing={isLoading && stocks.length === 0}
         onRefresh={onRefresh}
         colors={[theme.colors.primary]}
         tintColor={theme.colors.primary}
       />
     ),
-    [status, list.length, onRefresh, theme.colors.primary],
+    [isLoading, stocks.length, onRefresh, theme.colors.primary],
   );
 
   // Memoize the animated value to prevent recreation
@@ -72,7 +83,7 @@ const StockList: React.FC = React.memo(() => {
 
   // Memoize the footer component to prevent unnecessary re-renders
   const footerComponent = useMemo(() => {
-    if (status === 'loading' && list.length > 0) {
+    if (isLoading && stocks.length > 0) {
       return (
         <View
           style={[styles.footer, { backgroundColor: theme.colors.surface }]}
@@ -82,7 +93,7 @@ const StockList: React.FC = React.memo(() => {
       );
     }
 
-    if (!pagination.next_url && list.length > 0) {
+    if (!hasMoreStocks && stocks.length > 0) {
       return (
         <View
           style={[styles.footer, { backgroundColor: theme.colors.surface }]}
@@ -96,9 +107,9 @@ const StockList: React.FC = React.memo(() => {
               },
             ]}
           >
-            {list.length === 1
+            {stocks.length === 1
               ? '1 result found'
-              : `${list.length} results found`}
+              : `${stocks.length} results found`}
           </Text>
           <Text
             style={[
@@ -115,7 +126,7 @@ const StockList: React.FC = React.memo(() => {
       );
     }
 
-    if (pagination.next_url && list.length > 0) {
+    if (hasMoreStocks && stocks.length > 0) {
       return (
         <View
           style={[styles.footer, { backgroundColor: theme.colors.surface }]}
@@ -129,9 +140,9 @@ const StockList: React.FC = React.memo(() => {
               },
             ]}
           >
-            {list.length === 1
+            {stocks.length === 1
               ? '1 result found'
-              : `${list.length} results found`}
+              : `${stocks.length} results found`}
           </Text>
           <Text
             style={[
@@ -148,7 +159,7 @@ const StockList: React.FC = React.memo(() => {
       );
     }
 
-    if (list.length === 0 && status === 'idle') {
+    if (stocks.length === 0 && !isLoading) {
       return (
         <View
           style={[styles.footer, { backgroundColor: theme.colors.surface }]}
@@ -170,9 +181,9 @@ const StockList: React.FC = React.memo(() => {
 
     return null;
   }, [
-    status,
-    pagination.next_url,
-    list.length,
+    isLoading,
+    hasMoreStocks,
+    stocks.length,
     theme.colors.surface,
     theme.colors.onSurfaceVariant,
     textAlign,
@@ -191,11 +202,11 @@ const StockList: React.FC = React.memo(() => {
 
   // Memoize the onEndReached function
   const onEndReached = useCallback(() => {
-    // Only load more if we're not already loading and have a next URL
-    if (status === 'idle' && pagination.next_url) {
+    // Only load more if we're not already loading and have more stocks
+    if (!isLoading && hasMoreStocks) {
       loadMore();
     }
-  }, [status, pagination.next_url, loadMore]);
+  }, [isLoading, hasMoreStocks, loadMore]);
 
   // Memoize the content container style
   const contentContainerStyle = useMemo(
@@ -209,48 +220,15 @@ const StockList: React.FC = React.memo(() => {
     [theme.colors.background],
   );
 
-  if (status === 'loading' && list.length === 0) {
+  if (isLoading && stocks.length === 0) {
     return (
       <View style={containerStyle}>
         <InitialShimmerList count={15} />
       </View>
     );
   }
-
-  // Handle empty list state
-  if (status === 'idle' && list.length === 0) {
-    return (
-      <View style={containerStyle}>
-        <View style={styles.emptyContainer}>
-          <Text
-            style={[
-              styles.emptyTitle,
-              {
-                color: theme.colors.onSurfaceVariant,
-                textAlign: textAlign as any,
-              },
-            ]}
-          >
-            {t('explore.noResults')}
-          </Text>
-          <Text
-            style={[
-              styles.emptySubtitle,
-              {
-                color: theme.colors.onSurfaceVariant,
-                textAlign: textAlign as any,
-              },
-            ]}
-          >
-            {t('explore.noResultsSubtitle')}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   // Handle error state - show error message in center
-  if (status === 'error' && error) {
+  if (hasError) {
     // Show shimmer loading when retrying
     if (isRetrying) {
       return (
@@ -291,13 +269,7 @@ const StockList: React.FC = React.memo(() => {
               onPress={() => {
                 // Retry immediately without delays
                 setIsRetrying(true); // Show shimmer loading
-                if (pagination.next_url) {
-                  dispatch(
-                    fetchStocks({ filters, next_url: pagination.next_url }),
-                  );
-                } else {
-                  dispatch(fetchStocks({ filters }));
-                }
+                searchStocks('', filters);
               }}
               style={styles.retryButton}
               buttonColor={theme.colors.primary}
@@ -310,11 +282,42 @@ const StockList: React.FC = React.memo(() => {
       </View>
     );
   }
+  // Handle empty list state
+  if (!isLoading && stocks.length === 0) {
+    return (
+      <View style={containerStyle}>
+        <View style={styles.emptyContainer}>
+          <Text
+            style={[
+              styles.emptyTitle,
+              {
+                color: theme.colors.onSurfaceVariant,
+                textAlign: textAlign as any,
+              },
+            ]}
+          >
+            {t('explore.noResults')}
+          </Text>
+          <Text
+            style={[
+              styles.emptySubtitle,
+              {
+                color: theme.colors.onSurfaceVariant,
+                textAlign: textAlign as any,
+              },
+            ]}
+          >
+            {t('explore.noResultsSubtitle')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={containerStyle}>
       <FlatList
-        data={list}
+        data={stocks}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         onEndReachedThreshold={0.2}

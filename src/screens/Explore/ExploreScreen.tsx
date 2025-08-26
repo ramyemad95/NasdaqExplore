@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import ExploreHeader from './components/ExploreHeader';
@@ -11,14 +11,10 @@ const ExploreScreen: React.FC = React.memo(() => {
   const theme = useTheme();
   const filterSheetRef = useRef<BottomSheetFilterRef>(null);
 
-  // Memoize the container style to prevent recreation on every render
-  const containerStyle = useMemo(
-    () => [styles.container, { backgroundColor: theme.colors.background }],
-    [theme.colors.background],
-  );
-
   return (
-    <View style={containerStyle}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <ExploreHeader filterSheetRef={filterSheetRef} />
       <StockList />
       <BottomSheetFilter ref={filterSheetRef} />

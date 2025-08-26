@@ -35,7 +35,6 @@ export interface BottomSheetFilterRef {
 const BottomSheetFilter = forwardRef<BottomSheetFilterRef>((_, ref) => {
   const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
   const dispatch = useDispatch<AppDispatch>();
-  const { showError } = useToast();
   const filters = useSelector((s: RootState) => s.filters);
   const { error, status, errorDetails } = useSelector(
     (s: RootState) => s.stocks,
@@ -46,20 +45,6 @@ const BottomSheetFilter = forwardRef<BottomSheetFilterRef>((_, ref) => {
   const { t } = useTranslation();
 
   const [local, setLocal] = useState(filters);
-
-  // Show error toast when there's an error
-  useEffect(() => {
-    if (error && status === 'error') {
-      const retryFunction = () => {
-        console.log(
-          '🔄 Retrying based on error type:',
-          errorDetails?.errorType,
-        );
-        dispatch(setFilters(local));
-      };
-      showError(error, retryFunction);
-    }
-  }, [error, status, errorDetails, dispatch, local, showError]);
 
   // Expose methods to parent component
   useImperativeHandle(

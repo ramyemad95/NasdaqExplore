@@ -160,7 +160,7 @@ const InitialShimmerList: React.FC<{ count?: number; style?: any }> = ({
           style={[
             styles.initialShimmerItem,
             {
-              backgroundColor: theme.colors.surface,
+              backgroundColor: 'transparent',
               borderBottomColor: theme.colors.outline,
             },
           ]}

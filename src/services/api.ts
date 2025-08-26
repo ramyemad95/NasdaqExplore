@@ -7,6 +7,9 @@ import axios, {
 import Config from 'react-native-config';
 import ErrorManager from '../utils/errorManager';
 
+// Environment check for logging
+const isDevelopment = __DEV__;
+
 // Extend the AxiosRequestConfig to include retry information
 interface RetryConfig extends InternalAxiosRequestConfig {
   __retry?: boolean;
@@ -26,18 +29,22 @@ api.interceptors.request.use(
     const params = config.params ?? {};
     config.params = { ...params, apiKey: Config.API_KEY };
 
-    console.log('🚀 API Request:', {
-      method: config.method,
-      url: config.url,
-      params: config.params,
-      data: config.data,
-      headers: config.headers,
-    });
+    if (isDevelopment) {
+      console.log('🚀 API Request:', {
+        method: config.method,
+        url: config.url,
+        params: config.params,
+        data: config.data,
+        headers: config.headers,
+      });
+    }
 
     return config;
   },
   error => {
-    console.error('❌ Request interceptor error:', error);
+    if (isDevelopment) {
+      console.error('❌ Request interceptor error:', error);
+    }
     return Promise.reject(error);
   },
 );
@@ -45,24 +52,28 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log('✅ API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: response.config.url,
-      data: response.data,
-      headers: response.headers,
-    });
+    if (isDevelopment) {
+      console.log('✅ API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.config.url,
+        data: response.data,
+        headers: response.headers,
+      });
+    }
 
     return response;
   },
   async (error: AxiosError) => {
-    console.log('❌ API Error:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      url: error.config?.url,
-      message: error.message,
-      data: error.response?.data,
-    });
+    if (isDevelopment) {
+      console.log('❌ API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        message: error.message,
+        data: error.response?.data,
+      });
+    }
 
     // Retry logic for network errors and rate limits
     const original = error.config as RetryConfig;

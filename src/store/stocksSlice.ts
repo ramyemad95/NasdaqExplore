@@ -47,6 +47,53 @@ const initialState: StocksState = {
   lastRequestedUrl: undefined,
 };
 
+// Utility functions for pagination logic
+const isNewSearch = (
+  currentSearch: string,
+  currentFilters: string,
+  lastSearch?: string,
+  lastFilters?: string,
+): boolean => {
+  return lastSearch !== currentSearch || lastFilters !== currentFilters;
+};
+
+const mergeStocksWithoutDuplicates = (
+  existingStocks: Ticker[],
+  newStocks: Ticker[],
+): Ticker[] => {
+  const combined = [...existingStocks, ...newStocks];
+  const seenTickers = new Set<string>();
+
+  return combined.filter((item: Ticker) => {
+    const key = item?.ticker ?? '';
+    if (seenTickers.has(key)) {
+      return false;
+    }
+    seenTickers.add(key);
+    return true;
+  });
+};
+
+const updateStateForNewSearch = (
+  state: StocksState,
+  results: Ticker[],
+  currentSearch: string,
+  currentFilters: string,
+): void => {
+  state.list = results;
+  state.lastSearch = currentSearch;
+  state.lastFilters = currentFilters;
+  state.lastRequestedUrl = undefined;
+};
+
+const updateStateForPagination = (
+  state: StocksState,
+  results: Ticker[],
+): void => {
+  state.list = mergeStocksWithoutDuplicates(state.list, results);
+  // Don't update lastRequestedUrl for pagination to prevent blocking
+};
+
 export const fetchStocks = createAsyncThunk(
   'stocks/fetch',
   async (
@@ -97,29 +144,23 @@ const stocksSlice = createSlice({
           const currentUrl = action.meta.arg.next_url || '';
 
           if (
-            state.lastSearch !== currentSearch ||
-            state.lastFilters !== currentFilters
+            isNewSearch(
+              currentSearch,
+              currentFilters,
+              state.lastSearch,
+              state.lastFilters,
+            )
           ) {
             // New search - replace the list
-            state.list = results;
-            state.lastSearch = currentSearch;
-            state.lastFilters = currentFilters;
-            // For new searches, reset the lastRequestedUrl
-            state.lastRequestedUrl = undefined;
+            updateStateForNewSearch(
+              state,
+              results,
+              currentSearch,
+              currentFilters,
+            );
           } else {
             // Pagination - append to existing list
-            const combined = [...state.list, ...results];
-            const seenTickers = new Set<string>();
-            state.list = combined.filter((item: Ticker) => {
-              const key = item?.ticker ?? '';
-              if (seenTickers.has(key)) {
-                return false;
-              }
-              seenTickers.add(key);
-              return true;
-            });
-            // For pagination, don't set lastRequestedUrl to prevent blocking
-            // The lastRequestedUrl should only track completed requests
+            updateStateForPagination(state, results);
           }
 
           state.pagination.next_url = action.payload?.next_url;

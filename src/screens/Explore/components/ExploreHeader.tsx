@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Searchbar, useTheme, IconButton } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../../../store';
-import { fetchStocks, reset } from '../../../store/stocksSlice';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
 import { setFilters } from '../../../store/filtersSlice';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useRTL } from '../../../hooks/useRTL';
@@ -12,6 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomSheetFilterRef } from '../../../components/BottomSheetFilter';
 import { RootStackParamList } from '../../../navigation/AppNavigator';
 import { useTranslation } from 'react-i18next';
+import { useStocks } from '../../../hooks/useStocks';
 
 interface ExploreHeaderProps {
   filterSheetRef: React.RefObject<BottomSheetFilterRef | null>;
@@ -24,11 +24,13 @@ const ExploreHeader: React.FC<ExploreHeaderProps> = React.memo(
     const { t } = useTranslation();
     const navigation =
       useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const dispatch = useDispatch<AppDispatch>();
+
+    // Use the new useStocks hook
+    const { searchStocks, resetStocks } = useStocks();
+
+    // Performance monitoring
+
     const filters = useSelector((state: RootState) => state.filters);
-    const { error, status, errorDetails } = useSelector(
-      (state: RootState) => state.stocks,
-    );
     const [query, setQuery] = React.useState('');
     const debounced = useDebounce(query, 500);
 
@@ -48,10 +50,10 @@ const ExploreHeader: React.FC<ExploreHeaderProps> = React.memo(
       const shouldFetch = debounced !== '' || Object.keys(filters).length > 0;
 
       if (shouldFetch) {
-        dispatch(reset());
-        dispatch(fetchStocks(searchEffect));
+        resetStocks();
+        searchStocks(debounced, filters);
       }
-    }, [searchEffect, dispatch]);
+    }, [searchEffect, resetStocks, searchStocks]);
 
     // Memoize search styles to prevent recreation
     const searchStyles = useMemo(

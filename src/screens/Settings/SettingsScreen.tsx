@@ -31,7 +31,6 @@ const SettingsScreen: React.FC = () => {
     async (newLanguage: Language) => {
       // Update Redux state first (RTL will be updated automatically)
       dispatch(setLanguage(newLanguage));
-      console.log('newLanguage', newLanguage);
       // Change i18n language
       await i18n.changeLanguage(newLanguage);
     },

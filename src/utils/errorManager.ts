@@ -19,6 +19,46 @@ export interface ApiErrorResponse {
   status?: string;
 }
 
+// Error classification rules
+const ERROR_RULES = {
+  rate_limit: {
+    statuses: [429] as const,
+    keywords: [
+      'exceeded the maximum requests per minute',
+      'rate limit',
+      'too many requests',
+    ] as const,
+    isRetryable: true,
+    defaultMessage:
+      'Rate limit exceeded. Please wait a moment before trying again.',
+  },
+  auth: {
+    statuses: [401, 403] as const,
+    keywords: [
+      'unauthorized',
+      'forbidden',
+      'invalid api key',
+      'authentication',
+    ] as const,
+    isRetryable: false,
+    defaultMessage: 'Authentication failed. Please check your API key.',
+  },
+  validation: {
+    statuses: [400] as const,
+    keywords: ['invalid', 'validation', 'bad request'] as const,
+    isRetryable: false,
+    defaultMessage: 'Invalid request. Please check your parameters.',
+  },
+  network: {
+    keywords: ['network', 'connection', 'timeout'] as const,
+    isRetryable: true,
+    defaultMessage:
+      'Network error. Please check your connection and try again.',
+  },
+} as const;
+
+type ErrorRule = (typeof ERROR_RULES)[keyof typeof ERROR_RULES];
+
 /**
  * Centralized error manager for processing and categorizing errors
  */
@@ -34,39 +74,17 @@ export class ErrorManager {
     // Handle API response errors
     if (error.response?.data?.error) {
       const apiError = error.response.data as ApiErrorResponse;
-      errorMessage = apiError.error;
+      const status = error.response.status;
 
-      // Classify error based on content and status
-      if (this.isRateLimitError(apiError, error.response.status)) {
-        errorType = 'rate_limit';
-        isRetryable = true;
-        errorMessage =
-          'Rate limit exceeded. Please wait a moment before trying again.';
-      } else if (this.isAuthError(apiError, error.response.status)) {
-        errorType = 'auth';
-        isRetryable = false;
-        errorMessage = 'Authentication failed. Please check your API key.';
-      } else if (this.isValidationError(apiError, error.response.status)) {
-        errorType = 'validation';
-        isRetryable = false;
-        errorMessage = 'Invalid request. Please check your parameters.';
-      } else if (this.isServerError(error.response.status)) {
-        errorType = 'api';
-        isRetryable = true;
-        errorMessage = 'Server error. Please try again later.';
-      } else if (this.isClientError(error.response.status)) {
-        errorType = 'api';
-        isRetryable = false;
-        errorMessage = this.extractClientErrorMessage(apiError);
-      }
+      const classification = this.classifyError(apiError.error, status);
+      errorType = classification.type;
+      isRetryable = classification.isRetryable;
+      errorMessage = classification.message;
     } else if (this.isNetworkError(error)) {
-      // Handle network errors
       errorType = 'network';
       isRetryable = true;
-      errorMessage =
-        'Network error. Please check your connection and try again.';
+      errorMessage = ERROR_RULES.network.defaultMessage;
     } else if (error.message) {
-      // Handle other errors with messages
       errorMessage = error.message;
       errorType = this.classifyErrorByMessage(error.message);
       isRetryable = this.isRetryableByType(errorType);
@@ -81,64 +99,56 @@ export class ErrorManager {
   }
 
   /**
-   * Check if error is a rate limit error
+   * Classify error based on status and message content
    */
-  private static isRateLimitError(
-    apiError: ApiErrorResponse,
+  private static classifyError(
+    errorMessage: string,
     status?: number,
-  ): boolean {
-    return (
-      status === 429 ||
-      apiError.error.includes('exceeded the maximum requests per minute') ||
-      apiError.error.includes('rate limit') ||
-      apiError.error.includes('too many requests')
-    );
-  }
+  ): { type: ErrorType; isRetryable: boolean; message: string } {
+    const lowerMessage = errorMessage.toLowerCase();
 
-  /**
-   * Check if error is an authentication error
-   */
-  private static isAuthError(
-    apiError: ApiErrorResponse,
-    status?: number,
-  ): boolean {
-    return (
-      status === 401 ||
-      status === 403 ||
-      apiError.error.includes('unauthorized') ||
-      apiError.error.includes('forbidden') ||
-      apiError.error.includes('invalid api key') ||
-      apiError.error.includes('authentication')
-    );
-  }
+    for (const [type, rules] of Object.entries(ERROR_RULES)) {
+      if (type === 'network') continue; // Network errors are handled separately
 
-  /**
-   * Check if error is a validation error
-   */
-  private static isValidationError(
-    apiError: ApiErrorResponse,
-    status?: number,
-  ): boolean {
-    return (
-      status === 400 ||
-      apiError.error.includes('invalid') ||
-      apiError.error.includes('validation') ||
-      apiError.error.includes('bad request')
-    );
-  }
+      const errorRule = rules as ErrorRule & { statuses?: readonly number[] };
+      const statusMatch =
+        errorRule.statuses && status && errorRule.statuses.includes(status);
+      const keywordMatch = errorRule.keywords.some(keyword =>
+        lowerMessage.includes(keyword.toLowerCase()),
+      );
 
-  /**
-   * Check if error is a server error (5xx)
-   */
-  private static isServerError(status?: number): boolean {
-    return status !== undefined && status >= 500;
-  }
+      if (statusMatch || keywordMatch) {
+        return {
+          type: type as ErrorType,
+          isRetryable: errorRule.isRetryable,
+          message: errorRule.defaultMessage,
+        };
+      }
+    }
 
-  /**
-   * Check if error is a client error (4xx)
-   */
-  private static isClientError(status?: number): boolean {
-    return status !== undefined && status >= 400 && status < 500;
+    // Handle server errors (5xx)
+    if (status && status >= 500) {
+      return {
+        type: 'api',
+        isRetryable: true,
+        message: 'Server error. Please try again later.',
+      };
+    }
+
+    // Handle client errors (4xx)
+    if (status && status >= 400 && status < 500) {
+      return {
+        type: 'api',
+        isRetryable: false,
+        message: this.extractClientErrorMessage(errorMessage),
+      };
+    }
+
+    return {
+      type: 'other',
+      isRetryable: false,
+      message: 'An unexpected error occurred.',
+    };
   }
 
   /**
@@ -156,21 +166,19 @@ export class ErrorManager {
   /**
    * Extract user-friendly message from client errors
    */
-  private static extractClientErrorMessage(apiError: ApiErrorResponse): string {
-    // Try to extract meaningful part of the error message
-    const error = apiError.error;
+  private static extractClientErrorMessage(error: string): string {
+    const lowerError = error.toLowerCase();
 
-    if (error.includes('not found')) {
+    if (lowerError.includes('not found')) {
       return 'The requested resource was not found.';
-    } else if (error.includes('already exists')) {
+    } else if (lowerError.includes('already exists')) {
       return 'The resource already exists.';
-    } else if (error.includes('required')) {
+    } else if (lowerError.includes('required')) {
       return 'Required information is missing.';
-    } else if (error.includes('invalid format')) {
+    } else if (lowerError.includes('invalid format')) {
       return 'Invalid data format provided.';
     }
 
-    // Default client error message
     return 'Invalid request. Please check your parameters and try again.';
   }
 
@@ -182,10 +190,9 @@ export class ErrorManager {
 
     if (
       lowerMessage.includes('network') ||
-      lowerMessage.includes('connection')
+      lowerMessage.includes('connection') ||
+      lowerMessage.includes('timeout')
     ) {
-      return 'network';
-    } else if (lowerMessage.includes('timeout')) {
       return 'network';
     } else if (
       lowerMessage.includes('auth') ||
@@ -206,19 +213,7 @@ export class ErrorManager {
    * Determine if error is retryable based on type
    */
   private static isRetryableByType(errorType: ErrorType): boolean {
-    switch (errorType) {
-      case 'network':
-      case 'rate_limit':
-        return true;
-      case 'api':
-        // Some API errors might be retryable, but we'll be conservative
-        return false;
-      case 'auth':
-      case 'validation':
-      case 'other':
-      default:
-        return false;
-    }
+    return ['network', 'rate_limit'].includes(errorType);
   }
 
   /**
