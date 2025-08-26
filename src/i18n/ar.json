@@ -1,0 +1,55 @@
+{
+  "common": {
+    "retry": "إعادة المحاولة",
+    "error": "خطأ"
+  },
+  "explore": {
+    "noResults": "لا توجد نتائج",
+    "noResultsSubtitle": "حاول تعديل مصطلحات البحث أو المرشحات",
+    "searchPlaceholder": "البحث عن الأسهم..."
+  },
+  "filters": {
+    "title": "المرشحات",
+    "market": "السوق",
+    "active": "نشط",
+    "apply": "تطبيق",
+    "reset": "إعادة تعيين",
+    "order": "الترتيب",
+    "sort": "ترتيب حسب",
+    "marketOptions": {
+      "stocks": "الأسهم",
+      "crypto": "العملات الرقمية",
+      "fx": "العملات الأجنبية",
+      "otc": "السوق الموازي",
+      "indices": "المؤشرات"
+    },
+    "orderOptions": {
+      "asc": "تصاعدي",
+      "desc": "تنازلي"
+    },
+    "sortOptions": {
+      "ticker": "الرمز",
+      "name": "الاسم"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "appearance": "المظهر",
+    "language": "اللغة",
+    "light": "فاتح",
+    "system": "النظام",
+    "dark": "داكن",
+    "english": "الإنجليزية",
+    "arabic": "العربية"
+  },
+  "details": {
+    "market": "السوق",
+    "locale": "المنطقة",
+    "currency": "العملة",
+    "exchange": "البورصة",
+    "cik": "رقم الهوية",
+    "cusip": "رقم التعريف",
+    "marketInformation": "معلومات السوق",
+    "legalInformation": "المعلومات القانونية"
+  }
+}

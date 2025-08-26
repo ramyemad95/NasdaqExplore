@@ -1,0 +1,55 @@
+{
+  "common": {
+    "retry": "Retry",
+    "error": "Error"
+  },
+  "explore": {
+    "noResults": "No Results Found",
+    "noResultsSubtitle": "Try adjusting your search terms or filters",
+    "searchPlaceholder": "Search stocks..."
+  },
+  "filters": {
+    "title": "Filters",
+    "market": "Market",
+    "active": "Active",
+    "apply": "Apply",
+    "reset": "Reset",
+    "order": "Order",
+    "sort": "Sort By",
+    "marketOptions": {
+      "stocks": "Stocks",
+      "crypto": "Crypto",
+      "fx": "FX",
+      "otc": "OTC",
+      "indices": "Indices"
+    },
+    "orderOptions": {
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "sortOptions": {
+      "ticker": "Ticker",
+      "name": "Name"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "light": "Light",
+    "system": "System",
+    "dark": "Dark",
+    "english": "English",
+    "arabic": "Arabic"
+  },
+  "details": {
+    "market": "Market",
+    "locale": "Locale",
+    "currency": "Currency",
+    "exchange": "Exchange",
+    "cik": "CIK",
+    "cusip": "CUSIP",
+    "marketInformation": "Market Information",
+    "legalInformation": "Legal Information"
+  }
+}
