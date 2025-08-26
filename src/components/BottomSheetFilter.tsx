@@ -42,7 +42,7 @@ const BottomSheetFilter = forwardRef<BottomSheetFilterRef>((_, ref) => {
   );
   const bottomSheetRef = useRef<BottomSheet>(null);
   const theme = useAppTheme();
-  const { textAlign, isRTL } = useRTL();
+  const { isRTL } = useRTL();
   const { t } = useTranslation();
 
   const [local, setLocal] = useState(filters);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { List, Switch, Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,19 +19,6 @@ const SettingsScreen: React.FC = () => {
   const { colors } = useTheme();
   const { t, i18n, ready } = useTranslation();
   const { textAlign } = useRTL();
-  const [forceUpdate, setForceUpdate] = useState(0);
-
-  // Force re-render when language changes
-  useEffect(() => {
-    setForceUpdate(prev => prev + 1);
-  }, [language]);
-
-  // Force re-render when i18n is ready
-  useEffect(() => {
-    if (ready) {
-      setForceUpdate(prev => prev + 1);
-    }
-  }, [ready]);
 
   const handleThemeChange = useCallback(
     (newTheme: Theme) => {
@@ -42,14 +29,11 @@ const SettingsScreen: React.FC = () => {
 
   const handleLanguageChange = useCallback(
     async (newLanguage: Language) => {
-      // Update Redux state first
+      // Update Redux state first (RTL will be updated automatically)
       dispatch(setLanguage(newLanguage));
-
+      console.log('newLanguage', newLanguage);
       // Change i18n language
       await i18n.changeLanguage(newLanguage);
-
-      // Force re-render
-      setForceUpdate(prev => prev + 1);
     },
     [dispatch, i18n],
   );
@@ -66,38 +50,19 @@ const SettingsScreen: React.FC = () => {
   }
 
   // Memoize options to prevent unnecessary re-renders
-  const themeOptions = React.useMemo(
-    () => [
-      {
-        value: 'light' as Theme,
-        label: t('settings.light', { lng: language }),
-      },
-      {
-        value: 'dark' as Theme,
-        label: t('settings.dark', { lng: language }),
-      },
-      {
-        value: 'system' as Theme,
-        label: t('settings.system', { lng: language }),
-      },
-    ],
-    [t, language, forceUpdate], // Include language and forceUpdate to trigger re-calculation
-  );
+  const themeOptions = [
+    { value: 'light' as Theme, label: t('settings.light') },
+    { value: 'dark' as Theme, label: t('settings.dark') },
+    { value: 'system' as Theme, label: t('settings.system') },
+  ];
 
-  const languageOptions = React.useMemo(
-    () => [
-      { value: 'en' as Language, label: 'English' },
-      { value: 'ar' as Language, label: 'العربية' },
-    ],
-    [],
-  );
-
-  // Add key to force re-render when language changes
-  const screenKey = `settings-${language}-${forceUpdate}-${ready}`;
+  const languageOptions = [
+    { value: 'en' as Language, label: t('settings.english') },
+    { value: 'ar' as Language, label: t('settings.arabic') },
+  ];
 
   return (
     <ScrollView
-      key={screenKey}
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.contentContainer}
     >
@@ -112,7 +77,7 @@ const SettingsScreen: React.FC = () => {
             },
           ]}
         >
-          {t('settings.appearance', { lng: language })}
+          {t('settings.appearance')}
         </Text>
         {themeOptions.map(option => (
           <List.Item
@@ -156,7 +121,7 @@ const SettingsScreen: React.FC = () => {
             },
           ]}
         >
-          {t('settings.language', { lng: language })}
+          {t('settings.language')}
         </Text>
         {languageOptions.map(option => (
           <List.Item

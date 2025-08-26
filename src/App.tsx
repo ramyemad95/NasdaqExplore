@@ -9,14 +9,12 @@ import AppNavigator from './navigation/AppNavigator';
 import { store, persistor } from './store';
 import i18n from './i18n';
 import { useSettings } from './hooks/useSettings';
-import { useRTLSync } from './hooks/useRTLSync';
 import { ToastProvider } from './contexts/ToastContext';
 import Toast from './components/Toast';
 
 const AppContent: React.FC = () => {
   const theme = useAppTheme();
   const { language } = useSettings();
-  const { isRTL, isSynced } = useRTLSync();
 
   // Handle language changes
   useEffect(() => {
