@@ -40,6 +40,15 @@ export async function fetchTickers(params: StocksQuery) {
     });
     return response.data;
   } catch (error: any) {
+    // The API layer now provides enhanced error details through ErrorManager
+    console.log('🚨 Stocks Service Error:', {
+      message: error.message,
+      isRetryable: error.isRetryable,
+      errorType: error.errorType,
+      status: error.response?.status,
+    });
+
+    // Re-throw the enhanced error for the Redux layer to handle
     throw error;
   }
 }
