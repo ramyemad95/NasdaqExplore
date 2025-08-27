@@ -44,7 +44,6 @@ const HeaderCard: React.FC<HeaderCardProps> = memo(
 
           <View style={styles.statusSection}>
             <Chip
-              icon={stock.active ? 'check-circle' : 'close-circle'}
               style={[styles.statusChip, { backgroundColor: statusColor }]}
               textStyle={{ color: theme.colors.onError }}
             >

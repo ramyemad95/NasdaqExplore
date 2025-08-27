@@ -136,6 +136,7 @@ const ExploreHeader: React.FC<ExploreHeaderProps> = React.memo(
             returnKeyType="search"
             autoCapitalize="none"
             autoCorrect={false}
+            accessibilityLabel={t('explore.searchPlaceholder')}
           />
           {query.length > 0 && (
             <TouchableOpacity
