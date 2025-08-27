@@ -41,8 +41,7 @@
     "react-native-vector-icons": "^10.3.0",
     "react-native-worklets": "^0.4.0",
     "react-redux": "^9.2.0",
-    "redux-persist": "^6.0.0",
-    "styled-components": "^6.1.19"
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
