@@ -27,7 +27,7 @@ const baseState = {
     status: 'idle',
     error: undefined,
     errorDetails: undefined,
-    pagination: { next_url: null, count: 0 },
+    pagination: { next_url: null, count: 0, hasMore: false },
     lastSearch: '',
     lastFilters: '{}',
   },
@@ -76,7 +76,7 @@ describe('StockList', () => {
           { ticker: 'MSFT', name: 'Microsoft' },
         ],
         status: 'idle',
-        pagination: { next_url: 'next', count: 2 },
+        pagination: { next_url: 'next', count: 2, hasMore: true },
       },
     });
 
@@ -93,7 +93,7 @@ describe('StockList', () => {
         ...baseState.stocks,
         list: [{ ticker: 'AAPL', name: 'Apple Inc.' }],
         status: 'idle',
-        pagination: { next_url: null, count: 1 },
+        pagination: { next_url: null, count: 1, hasMore: false },
       },
     });
 

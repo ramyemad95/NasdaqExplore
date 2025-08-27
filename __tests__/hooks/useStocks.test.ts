@@ -41,6 +41,7 @@ describe('useStocks', () => {
     pagination: {
       next_url: 'https://api.example.com/next',
       count: 100,
+      hasMore: true,
     },
     lastSearch: 'apple',
     lastFilters: '{"market":"stocks"}',
@@ -99,7 +100,11 @@ describe('useStocks', () => {
   it('should handle empty pagination', () => {
     const noPaginationState = {
       ...mockStocksState,
-      pagination: {},
+      pagination: {
+        next_url: undefined,
+        count: undefined,
+        hasMore: false,
+      },
     };
     const store = createTestStore(noPaginationState);
 
@@ -115,7 +120,11 @@ describe('useStocks', () => {
   it('should handle undefined pagination', () => {
     const undefinedPaginationState = {
       ...mockStocksState,
-      pagination: undefined,
+      pagination: {
+        next_url: undefined,
+        count: undefined,
+        hasMore: false,
+      },
     };
     const store = createTestStore(undefinedPaginationState);
 
