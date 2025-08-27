@@ -27,11 +27,11 @@ export const useStocks = () => {
 
   const isLoading = stocks.status === 'loading';
   const hasError = stocks.status === 'error';
-  const hasMoreStocks = !!stocks.pagination.next_url;
-  const paginationUrl = stocks.pagination.next_url;
+  const hasMoreStocks = !!stocks.pagination?.next_url;
+  const paginationUrl = stocks.pagination?.next_url;
 
   return {
-    stocks: stocks.list,
+    stocks: stocks.list || [],
     isLoading,
     hasError,
     error: stocks.error,

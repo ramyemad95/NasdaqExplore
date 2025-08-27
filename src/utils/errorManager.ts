@@ -67,6 +67,16 @@ export class ErrorManager {
    * Process API errors and return user-friendly error information
    */
   static processApiError(error: any): ProcessedError {
+    // Handle null/undefined errors
+    if (!error) {
+      return {
+        message: 'An unexpected error occurred',
+        isRetryable: false,
+        errorType: 'other',
+        originalError: error,
+      };
+    }
+
     let errorMessage = 'An unexpected error occurred';
     let isRetryable = false;
     let errorType: ErrorType = 'other';

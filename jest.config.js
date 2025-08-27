@@ -10,4 +10,25 @@ module.exports = {
   moduleNameMapper: {
     '\\.(png|jpg|jpeg|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
   },
+  // Coverage configuration
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{ts,tsx}',
+    '!src/**/index.ts',
+    '!src/**/types.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: 'coverage',
+  testEnvironment: 'node',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 };

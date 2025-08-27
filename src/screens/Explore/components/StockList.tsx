@@ -317,6 +317,7 @@ const StockList: React.FC = React.memo(() => {
   return (
     <View style={containerStyle}>
       <FlatList
+        testID="stock-list"
         data={stocks}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
