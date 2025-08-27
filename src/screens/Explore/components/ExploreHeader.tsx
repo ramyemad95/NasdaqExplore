@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Searchbar, useTheme, IconButton } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  TextInput,
+} from 'react-native';
+import { useTheme } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import { setFilters } from '../../../store/filtersSlice';
@@ -110,31 +116,65 @@ const ExploreHeader: React.FC<ExploreHeaderProps> = React.memo(
 
     return (
       <View style={containerStyles}>
-        <Searchbar
-          placeholder={t('explore.searchPlaceholder')}
-          value={query}
-          onChangeText={handleSearchChange}
-          style={searchStyles}
-          iconColor={theme.colors.onSurfaceVariant}
-          inputStyle={searchInputStyles}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-        />
-        <IconButton
-          icon="filter-variant"
-          iconColor={theme.colors.primary}
-          size={24}
+        <View style={searchStyles}>
+          <TouchableOpacity style={styles.searchIconContainer}>
+            <Image
+              source={require('../../../assets/search.png')}
+              style={[
+                styles.searchIcon,
+                { tintColor: theme.colors.onSurfaceVariant },
+              ]}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <TextInput
+            placeholder={t('explore.searchPlaceholder')}
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+            value={query}
+            onChangeText={handleSearchChange}
+            style={[styles.searchInput, searchInputStyles]}
+            returnKeyType="search"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setQuery('')}
+              style={styles.clearButton}
+            >
+              <Image
+                source={require('../../../assets/close.png')}
+                style={[
+                  styles.clearIcon,
+                  { tintColor: theme.colors.onSurfaceVariant },
+                ]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity
           onPress={handleFilterPress}
           accessibilityLabel={isRTL ? 'فلاتر' : 'Filters'}
           style={styles.iconButton}
-        />
-        <IconButton
-          icon="cog"
-          iconColor={theme.colors.primary}
-          size={24}
+        >
+          <Image
+            source={require('../../../assets/filter.png')}
+            style={[styles.icon, { tintColor: theme.colors.primary }]}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={handleSettingsPress}
           accessibilityLabel={isRTL ? 'الإعدادات' : 'Settings'}
           style={styles.iconButton}
-        />
+        >
+          <Image
+            source={require('../../../assets/setting.png')}
+            style={[styles.icon, { tintColor: theme.colors.primary }]}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
     );
   },
@@ -150,9 +190,40 @@ const styles = StyleSheet.create({
   },
   search: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchIconContainer: {
+    marginRight: 8,
+  },
+  searchIcon: {
+    width: 20,
+    height: 20,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
+  },
+  clearButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  clearIcon: {
+    width: 18,
+    height: 18,
   },
   iconButton: {
     padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 24,
+    height: 24,
   },
 });
 
