@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { fetchTickers, StocksQuery } from '../services/stocks';
+import { paginationService } from '../services/paginationService';
+import { PaginationState } from '../types';
 
 export type Ticker = {
   ticker: string;
@@ -16,11 +18,6 @@ export type Ticker = {
   last_updated_utc: string;
 };
 
-export type Pagination = {
-  count?: number;
-  next_url?: string;
-};
-
 type StocksState = {
   list: Ticker[];
   status: 'idle' | 'loading' | 'error';
@@ -30,10 +27,9 @@ type StocksState = {
     isRetryable: boolean;
     errorType: string;
   };
-  pagination: Pagination;
+  pagination: PaginationState;
   lastSearch?: string;
   lastFilters?: string;
-  lastRequestedUrl?: string;
 };
 
 const initialState: StocksState = {
@@ -41,57 +37,13 @@ const initialState: StocksState = {
   status: 'idle',
   error: undefined,
   errorDetails: undefined,
-  pagination: {},
+  pagination: {
+    next_url: undefined,
+    count: undefined,
+    hasMore: false,
+  },
   lastSearch: undefined,
   lastFilters: undefined,
-  lastRequestedUrl: undefined,
-};
-
-// Utility functions for pagination logic
-const isNewSearch = (
-  currentSearch: string,
-  currentFilters: string,
-  lastSearch?: string,
-  lastFilters?: string,
-): boolean => {
-  return lastSearch !== currentSearch || lastFilters !== currentFilters;
-};
-
-const mergeStocksWithoutDuplicates = (
-  existingStocks: Ticker[],
-  newStocks: Ticker[],
-): Ticker[] => {
-  const combined = [...existingStocks, ...newStocks];
-  const seenTickers = new Set<string>();
-
-  return combined.filter((item: Ticker) => {
-    const key = item?.ticker ?? '';
-    if (seenTickers.has(key)) {
-      return false;
-    }
-    seenTickers.add(key);
-    return true;
-  });
-};
-
-const updateStateForNewSearch = (
-  state: StocksState,
-  results: Ticker[],
-  currentSearch: string,
-  currentFilters: string,
-): void => {
-  state.list = results;
-  state.lastSearch = currentSearch;
-  state.lastFilters = currentFilters;
-  state.lastRequestedUrl = undefined;
-};
-
-const updateStateForPagination = (
-  state: StocksState,
-  results: Ticker[],
-): void => {
-  state.list = mergeStocksWithoutDuplicates(state.list, results);
-  // Don't update lastRequestedUrl for pagination to prevent blocking
 };
 
 export const fetchStocks = createAsyncThunk(
@@ -144,7 +96,7 @@ const stocksSlice = createSlice({
           const currentUrl = action.meta.arg.next_url || '';
 
           if (
-            isNewSearch(
+            paginationService.isNewSearch(
               currentSearch,
               currentFilters,
               state.lastSearch,
@@ -152,19 +104,29 @@ const stocksSlice = createSlice({
             )
           ) {
             // New search - replace the list
-            updateStateForNewSearch(
-              state,
+            const newState = paginationService.updateStateForNewSearch(
+              state.list,
               results,
               currentSearch,
               currentFilters,
+              action.payload,
             );
+
+            state.list = newState.items;
+            state.lastSearch = newState.search;
+            state.lastFilters = newState.filters;
+            state.pagination = newState.pagination;
           } else {
             // Pagination - append to existing list
-            updateStateForPagination(state, results);
-          }
+            const paginationState = paginationService.updateStateForPagination(
+              state.list,
+              results,
+              action.payload,
+            );
 
-          state.pagination.next_url = action.payload?.next_url;
-          state.pagination.count = action.payload?.count;
+            state.list = paginationState.items;
+            state.pagination = paginationState.pagination;
+          }
         },
       )
       .addCase(fetchStocks.rejected, (state, action) => {

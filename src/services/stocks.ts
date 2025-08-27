@@ -19,10 +19,6 @@ export async function fetchTickers(params: StocksQuery) {
     if (params.next_url) {
       // Extract the URL and add API key as a parameter
       const url = new URL(params.next_url);
-      if (Config.API_KEY) {
-        url.searchParams.append('apiKey', Config.API_KEY);
-      }
-
       const response = await api.get(url.toString());
       return response.data;
     }
@@ -41,7 +37,6 @@ export async function fetchTickers(params: StocksQuery) {
     return response.data;
   } catch (error: any) {
     // The API layer now provides enhanced error details through ErrorManager
-    // Log the error for debugging
     console.log('🚨 Stocks Service Error:', {
       message: error.message,
       isRetryable: error.isRetryable,
