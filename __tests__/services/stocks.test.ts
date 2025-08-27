@@ -110,7 +110,8 @@ describe('Stocks Service', () => {
 
       const result = await fetchTickers({ next_url: nextUrl });
 
-      expect(api.get).toHaveBeenCalledWith(`${nextUrl}&apiKey=test-api-key`);
+      // The API interceptor adds the API key to params, not to the URL
+      expect(api.get).toHaveBeenCalledWith(nextUrl);
       expect(result).toEqual(mockResponse);
     });
 
@@ -195,9 +196,8 @@ describe('Stocks Service', () => {
 
       const result = await fetchTickers(params);
 
-      expect(api.get).toHaveBeenCalledWith(
-        `${params.next_url}&apiKey=test-api-key`,
-      );
+      // The API interceptor adds the API key to params, not to the URL
+      expect(api.get).toHaveBeenCalledWith(params.next_url);
       expect(result).toEqual(mockResponse);
     });
   });
