@@ -93,39 +93,62 @@ describe('API Service', () => {
   });
 
   describe('Request Interceptor Logic', () => {
-    it('should add API key to request config', () => {
-      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+    it('should add API key to request config', async () => {
+      // Create a mock config object
       const mockConfig = {
         url: '/test',
         params: {},
+        method: 'get',
       };
 
-      const result = requestInterceptor(mockConfig);
-      expect(result.params.apiKey).toBe('test-key'); // The actual value from env
+      // Get the request interceptor function
+      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+
+      // Call the interceptor with the mock config
+      const result = await requestInterceptor(mockConfig);
+
+      // Check that the API key was added
+      expect(result.params).toBeDefined();
+      expect(result.params.apiKey).toBe('test-key');
     });
 
-    it('should preserve existing params when adding API key', () => {
-      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+    it('should preserve existing params when adding API key', async () => {
+      // Create a mock config object with existing params
       const mockConfig = {
         url: '/test',
         params: { existing: 'param' },
+        method: 'get',
       };
 
-      const result = requestInterceptor(mockConfig);
-      expect(result.params.apiKey).toBe('test-key'); // The actual value from env
+      // Get the request interceptor function
+      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+
+      // Call the interceptor with the mock config
+      const result = await requestInterceptor(mockConfig);
+
+      // Check that the API key was added and existing params preserved
+      expect(result.params).toBeDefined();
+      expect(result.params.apiKey).toBe('test-key');
       expect(result.params.existing).toBe('param');
     });
 
-    it('should create params object if it does not exist', () => {
-      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+    it('should create params object if it does not exist', async () => {
+      // Create a mock config object without params
       const mockConfig = {
         url: '/test',
+        method: 'get',
         // No params property
       };
 
-      const result = requestInterceptor(mockConfig);
+      // Get the request interceptor function
+      const requestInterceptor = api.interceptors.request.handlers[0].fulfilled;
+
+      // Call the interceptor with the mock config
+      const result = await requestInterceptor(mockConfig);
+
+      // Check that params object was created and API key added
       expect(result.params).toBeDefined();
-      expect(result.params.apiKey).toBe('test-key'); // The actual value from env
+      expect(result.params.apiKey).toBe('test-key');
     });
   });
 
